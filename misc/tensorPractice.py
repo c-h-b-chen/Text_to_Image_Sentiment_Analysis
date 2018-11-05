@@ -43,3 +43,8 @@ print('x7', x7)
 # Tensors can be moved to any device using the .to method.
 if torch.cuda.is_available():
     device = torch.device("cuda")
+    y = torch.ones_like(x7, device=device)  # directly create a tensor on GPU
+    x8 = x7.to(device)                       # or just use strings
+    z = x8 + y
+    print(z)
+    print(z.to("cpu", torch.double))       # ``.to`` can also
