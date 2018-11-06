@@ -39,6 +39,9 @@ print('x7', x7)
 # Note: all tensors on cpu support tensor to np.array conversion besides
 # CharTensor
 
+if torch.cuda.is_available():
+    print("We have GPUs")
+
 # CUDA Tensors
 # Tensors can be moved to any device using the .to method.
 if torch.cuda.is_available():
