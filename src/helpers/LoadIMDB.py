@@ -10,20 +10,20 @@ PRINT_DEBUG = True
 def get_IMDB(train=True, positive=True):
     '''
     Get the DataFrame(DF) for specified training/test positive/negative data 
-    samples. Generates and save pickled DF if non exists.
+    samples. Generates and save pickled DF if doens't exists.
 
     Params:
         train -- get the training/test set (default=True)
         positive -- get the positive/negative set (default=True)
 
     Return:
-        A dataframe of containing data from the IMDB dataset.
+        A dataframe containing data from the IMDB dataset.
     '''
     train_set = 'train' if train else 'test'
     positive_set = 'pos' if positive else 'neg'
     pickle_filename = 'imdb_' + train_set + '_' + positive_set
 
-    # This is what directory we must go in to get the data.
+    # Data directory
     generated_directory = os.path.join(DEFAULT_DATA_DIRECTORY, 
             train_set, positive_set)
 
@@ -42,9 +42,8 @@ def get_IMDB(train=True, positive=True):
     if (PRINT_DEBUG):
         print('building', generated_pickle_file) 
 
-    # Build empty DF. This is returned DF.
+    # Build empty DF. This is the returned DF.
     imdb_df = pd.DataFrame(columns=['review_id', 'rating', 'review', ])
-
     number_of_items = 0; # Keep track of where to insert next item.
 
     # Get all the files in the directory
@@ -66,6 +65,7 @@ def get_IMDB(train=True, positive=True):
     return imdb_df
 
 if __name__ == '__main__':
+    # Build all the dataframes.
     get_IMDB(train=True, positive=True)
     get_IMDB(train=True, positive=False)
     get_IMDB(train=False, positive=True)
