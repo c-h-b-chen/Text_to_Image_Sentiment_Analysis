@@ -3,13 +3,13 @@
 import pandas as pd
 import os # For working with file directory.
 
-DEFAULT_PICKLE_LOCATION = '../data/pickled/'
-DEFAULT_DATA_DIRECTORY = '../data/aclImdb/'
-PRINT_DEBUG = True
+DEFAULT_PICKLE_LOCATION = './data/pickled/'
+DEFAULT_DATA_DIRECTORY = './data/aclImdb/'
+PRINT_DEBUG = False
 
 def get_IMDB(train=True, positive=True):
     '''
-    Get the DataFrame(DF) for specified training/test positive/negative data 
+    Get the DataFrame(DF) for specified training/test positive/negative data
     samples. Generates and save pickled DF if doens't exists.
 
     Params:
@@ -18,13 +18,14 @@ def get_IMDB(train=True, positive=True):
 
     Return:
         A dataframe containing data from the IMDB dataset.
+        Column = ['review_id', 'rating', 'review']
     '''
     train_set = 'train' if train else 'test'
     positive_set = 'pos' if positive else 'neg'
     pickle_filename = 'imdb_' + train_set + '_' + positive_set
 
     # Data directory
-    generated_directory = os.path.join(DEFAULT_DATA_DIRECTORY, 
+    generated_directory = os.path.join(DEFAULT_DATA_DIRECTORY,
             train_set, positive_set)
 
     # Where the pickle file will go.
@@ -40,7 +41,7 @@ def get_IMDB(train=True, positive=True):
 
     # Start buildind the DF
     if (PRINT_DEBUG):
-        print('building', generated_pickle_file) 
+        print('building', generated_pickle_file)
 
     # Build empty DF. This is the returned DF.
     imdb_df = pd.DataFrame(columns=['review_id', 'rating', 'review', ])
@@ -64,9 +65,9 @@ def get_IMDB(train=True, positive=True):
     imdb_df.to_pickle(generated_pickle_file)
     return imdb_df
 
-if __name__ == '__main__':
-    # Build all the dataframes.
-    get_IMDB(train=True, positive=True)
-    get_IMDB(train=True, positive=False)
-    get_IMDB(train=False, positive=True)
-    get_IMDB(train=False, positive=False)
+# if __name__ == '__main__':
+#     # Build all the dataframes.
+#     get_IMDB(train=True, positive=True)
+#     get_IMDB(train=True, positive=False)
+#     get_IMDB(train=False, positive=True)
+#     get_IMDB(train=False, positive=False)
