@@ -1,39 +1,17 @@
-# Vanilla RNN used for semantic analysis build with low-level tensorflow.
-
+# Vanilla RNN used for semantic analysis build with keras tensorflow.
 import tensorflow as tf
-import numpy as np
-from tensorflow.contrib import rnn
+from tensorflow.keras import layers
 
-class RNN_Model(object):
-    '''
-    Description:
-    Function:
-        __init__() -- Build the RNN object instantiate all basic parameters.
-            Loads any parameters that might be saved. 
-        predict() -- Generate labels based on input.
-        score() -- Generate labels and determine the accuaracy of the model
-            based on the inputs '''
+class RNN_Model(tf.keras.Model):
+    def __init__(self, num_classes=2):
+        super(RNN_Model, self).__init__(name="RNN_Model")
+        self.num_classes = num_classes
+        # TODO: Figure out how to instantiate the RNN cells.
+        self.rnn_1 = layers.LSTMCell(128)
+        # self.rnn_1 = layers.CuDNNLSTM(128) # GPU accelerated cell
 
-    def __init__(self, num_layers=10, training=True):
-        '''
-        Build the main functionality of the model
-
-        Notes: Delete this
-          1) Need a way to load in past parameters to allow for more training
-          if needed
-          2) Build the main data input stream into the model.
-          3) Build the each node.
-          4) Define the execution graph that will be ran when called on.
-        '''
-        pass
-
-    def train(lr=0.001):
-        pass
-
-    def predict():
-        pass
-
-    def score():
+    # Forward pass through the model.
+    def call(self, inputs):
         pass
 
 if __name__ == "__main__":
