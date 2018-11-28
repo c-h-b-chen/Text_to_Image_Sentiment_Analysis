@@ -1,39 +1,17 @@
 import tensorflow as tf
-# from tensorflow import keras
-# from tensorflow.keras import layers
+
+from tensorflow import keras
+from tensorflow.keras import layers
 from tensorflow.keras.applications import InceptionV3
 
-NUM_CLASSES = 2
-NUM_HID_LAYERS = 64
-NUM_FC_LAYERS = 5
-
 class MyInception(tf.keras.Model):
-
-    def __init__(self, num_classes=NUM_CLASSES, hidden_size=NUM_HID_LAYERS, 
-            num_fc_layers=NUM_FC_LAYERS):
+    def __init__(self, hidden_size, num_classes):
         super().__init__()
-
         initializer = tf.variance_scaling_initializer(scale=2.0)
 
-        # FIXME: Include an input_shape
-        # pooling so that we have an output 2D tensor. to work with. Make sure
-        # to flatten it.
-        self.cnn = InceptionV3(weights='imagenet', include_top=False, pooling='avg')
-        # Make sure to not adjust the weights of the transfer model.
-        cnn.trainable = False 
-
-        # TODO: Add the word2vec layers here.
-
-        self.fullyConnected = tf.keras.Sequential()
-        # Build the fully connect layers.
-        for _ in range(num_fc_layers):
-            self.fullyConnected.add(tf.keras.layers.Dense(64, activation='relu',
-                kernel_initializer=initializer))
-        self.output_layer = tf.keras.layers
 
     # Forward pass through the training loop.
     def call(self, x, training=None):
-        pass
 
 
 # model = tf.keras.Sequential()
