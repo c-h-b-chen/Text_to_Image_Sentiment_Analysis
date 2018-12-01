@@ -3,48 +3,101 @@ import tensorflow as tf
 # from tensorflow.keras import layers
 from tensorflow.keras.applications import InceptionV3
 
-NUM_CLASSES = 2
+NUM_CLASSES = 4
 NUM_HID_LAYERS = 64
-NUM_FC_LAYERS = 5
+NUM_FC_LAYERS = 2
 
 class MyInception(tf.keras.Model):
-
-    def __init__(self, num_classes=NUM_CLASSES, hidden_size=NUM_HID_LAYERS, 
-            num_fc_layers=NUM_FC_LAYERS):
+#    def __init__(self, wv1, wv2, wv3, hidden_size=NUM_HID_LAYERS,
+    def __init__(self, hidden_size=NUM_HID_LAYERS,
+            num_fc_layers=NUM_FC_LAYERS, num_classes=NUM_CLASSES):
+        ''' Constructor of our Imagenet/Inception Model for sentiment analysis.
+        params:
+            wv1 -- An embedding tensor used to convert input
+            wv2 -- An embedding tensor used to convert input
+            wv3 -- An embedding tensor used to convert input
+            hidden_size -- Number of hidden states in FC layers
+            num_fc_layers -- Number of fully connected layers at end of model.
+            num_classes -- How many classes are there to predict.
+        '''
         super().__init__()
 
+        # Default initializer we will use.
         initializer = tf.variance_scaling_initializer(scale=2.0)
 
-        # FIXME: Include an input_shape
-        # pooling so that we have an output 2D tensor. to work with. Make sure
+        # Pooling so that we have an output 2D tensor. to work with. Make sure
         # to flatten it.
-        self.cnn = InceptionV3(weights='imagenet', include_top=False, pooling='avg')
-        # Make sure to not adjust the weights of the transfer model.
-        cnn.trainable = False 
-
-        # TODO: Add the word2vec layers here.
+        self.cnn = InceptionV3(weights='imagenet', include_top=False,
+                pooling='avg')
+        self.cnn.trainable = False 
 
         self.fullyConnected = tf.keras.Sequential()
+
         # Build the fully connect layers.
         for _ in range(num_fc_layers):
             self.fullyConnected.add(tf.keras.layers.Dense(64, activation='relu',
                 kernel_initializer=initializer))
-        self.output_layer = tf.keras.layers.Dense(4)
-        self.sm = tf.keras.Softmax()
 
-    # Forward pass through the training loop.
+        self.output_layer = tf.keras.layers.Dense(num_classes,
+                kernel_initializer=initializer)
+
+    # Forward pass through the training loop when we call the model.
     def call(self, x, training=None):
-        pass
+
+        # On input data, we will need to convert the embed vectors into their
+        # true embeddings using out embedding models.
+        # embedded = tf.nn.embedding_lookup(embeddings, inputs)
+        x = self.cnn(x)
+        x = tf.layers.flatten(x)
+        x = self.fullyConnected(x)
+        scores = self.output_layer(x)
+        return scores
+
 
 def test_MyInception():
     '''
-    Test basic functionality of MyInception
+    Tests basic functionality of MyInception. Used to make sure input pipeline
+    flows as expected
     '''
-    pass
+    device = "cpu:0" # Test on CPU for now.
+
+    tf.reset_default_graph()
+    hidden_size, num_fc_layers, num_classes = 64, 2, 4
+    model = MyInception(hidden_size=hidden_size, num_fc_layers=num_fc_layers,
+            num_classes=num_classes)
+
+    with tf.device(device):
+        x = tf.zeros((64, 299, 299, 3)) # 64 samples, 3 channels, 299x299
+        scores = model(x)
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        scores_np = sess.run(scores)
+        print(scores_np.shape) # Should be (64, 4)
+
 
 if __name__ == "__main__":
     print("testing MyInception")
     test_MyInception()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # model = tf.keras.Sequential()

@@ -162,3 +162,9 @@ if __name__ == '__main__':
     get_IMDB(train=False, positive=True)
     get_IMDB(train=False, positive=False)
 
+    get_emb_IMDB(train=True, positive=True)
+    get_emb_IMDB(train=True, positive=False)
+    get_emb_IMDB(train=False, positive=True)
+    get_emb_IMDB(train=False, positive=False)
+
+
