@@ -5,7 +5,7 @@ import os
 import time
 import warnings
 
-from LoadIMDB import get_IMDB
+import LoadIMDB 
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -37,16 +37,16 @@ def get_embedding(which_embedding):
 
         if (PRINT_DEBUG):
             print('loading ../data/word2vec_models/w2v_m%s' % which_embedding)
-        return gensim.models.Word2Vec.load(
+        return gensim.models.KeyedVectors.load(
             "../data/word2vec_models/w2v_m%s.model" % which_embedding)
 
     print("\nTraining w2v_m%s" % which_embedding)
 
     # Load in the datasets.
-    train_pos = get_IMDB(train=True, positive=True)
-    train_neg = get_IMDB(train=True, positive=False)
-    test_pos = get_IMDB(train=False, positive=True)
-    test_neg = get_IMDB(train=False, positive=False)
+    train_pos = LoadIMDB.get_IMDB(train=True, positive=True)
+    train_neg = LoadIMDB.get_IMDB(train=True, positive=False)
+    test_pos = LoadIMDB.get_IMDB(train=False, positive=True)
+    test_neg = LoadIMDB.get_IMDB(train=False, positive=False)
 
     my_lines = get_lines([train_pos, train_neg, test_pos, test_neg])
 
