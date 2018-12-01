@@ -1,2 +1,12 @@
 .DS_Store
 results
+.*.swp
+
+src/data/aclImdb
+!src/data/aclImdb/.gitkeep
+
+src/data/pickled
+!src/data/.gitkeep
+
+src/data/word2vec_models
+!src/data/word2vec_models/.gitkeep
