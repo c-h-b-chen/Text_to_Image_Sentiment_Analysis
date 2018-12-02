@@ -18,6 +18,7 @@ import MyInception
 USE_GPU = True
 
 LOG_TO_FILE = False
+
 LOG_FILENAME = "../data/logs/inception.log"
 SAVE_MODEL = "../data/checkpoint/cp.ckpt" # Default save path of model.
 
@@ -26,13 +27,17 @@ W2V_M1_LOC = "../data/word2vec_models/w2v_m1.model"
 W2V_M2_LOC = "../data/word2vec_models/w2v_m2.model"
 W2V_M3_LOC = "../data/word2vec_models/w2v_m3.model"
 
-NUM_WORDS = 299
 EMB_DIM = 299
 NUM_CHANNELS = 3
+NUM_WORDS = 299
 HID_SIZE = 64
-NUM_LAYERS = 3
+
 NUM_CLASSES = 4
+NUM_LAYERS = 3
+
+BATCH_SIZE = 100
 PRINT_EVERY = 100
+#NUM_EPOCHS = 1000
 
 
 
@@ -82,7 +87,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         device = '/cpu:0' 
 
     training = LoadIMDB.dataset_IMDB(train=True) # Load in the data we need.
-    validation = LoadIMDB.dataset_IMDB(train=True, val=True)
+    validation = LoadIMDB.dataset_IMDB(train=False, val=True)
 
     x_training = training['embedding'].values
     y_training = training['rating'].values
@@ -95,7 +100,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 #    temp_training = [x for x in x_training]
 #    x_training = np.array(temp_training)
     x_training = np.array([x for x in x_training])
-    validation = np.array([x for x in validiation])
+    validation = np.array([x for x in validation])
 
 #    print("y_training", type(y_training), y_training.shape)
 #    print(y_training[:10])
@@ -105,26 +110,26 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 #    print(type(x_training[0][0]), x_training[0][0].shape)
 #    print(type(x_training[0][0][0]))
 
-
     # Start building data tensors
 
     # Weights must be on cpu because embedding doesn't support GPU
     with tf.device(cpu):
         # Features used to train. Contains 3 channels. Must convert all 3
-        inputs = tf.placeholder(tf.int32, [None], name='word_ids')
+        emb_input = tf.placeholder(tf.int32, [None,], name='word_ids')
 
-        x = tf.placeholder(tf.int32, shape=[None, 3, 299], 
+        x_train = tf.placeholder(tf.int32, shape=[None, 3, 299], 
                 name="raw_input")
-        y = tf.placeholder(tf.int32, shape=[None,], name="rating")
+        y_train = tf.placeholder(tf.int32, shape=[None,], name="rating")
 
         # Build train dataset #TODO: Adjust batch size and maybe add shuffling
-        train_dset = tf.data.Dataset.from_tensor_slices((x, y))
+        train_dset = tf.data.Dataset.from_tensor_slices(
+                (x_train, y_train)).batch(BATCH_SIZE)
         train_it = train_dset.make_initializable_iterator()
         x_train_el, y_train_el = train_it.get_next()
 
         # Build validation dataset # TODO: Adjust batch size and add shuffling
         # Note we are reusing the x_training and y_training tensors.
-        val_dset = tf.data.Dataset.from_tensor_slices((x, y))
+        val_dset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
         val_it = val_dset.make_initializable_iterator()
         x_val_el, y_val_el = val_it.get_next()
 
@@ -135,15 +140,16 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 
         # Tensor that will perform the conversion to true embedding vector. 
         # inputs should be of shape (299,)
-        embedded1 = tf.nn.embedding_lookup(W1, inputs)
-        embedded2 = tf.nn.embedding_lookup(W2, inputs)
-        embedded3 = tf.nn.embedding_lookup(W3, inputs)
+        embedded1 = tf.nn.embedding_lookup(W1, emb_input)
+        embedded2 = tf.nn.embedding_lookup(W2, emb_input)
+        embedded3 = tf.nn.embedding_lookup(W3, emb_input)
 
         # TODO: Check if this is valid.
 #        built_sam = tf.Variable([embedded1, embedded2, embedded3])
 
     # Main training enviornment.
     with tf.device(device):
+        # These are direct inputs into the training model.
         x = tf.placeholder(tf.float32, [None, NUM_WORDS, EMB_DIM, 3],
             name="all_sam")
         y = tf.placeholder(tf.int32, [None, ])
@@ -169,13 +175,13 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
     with tf.Session(config=config) as sess:
         if (tf.train.checkpoint_exists(SAVE_MODEL)):
             saver.restore(sess, SAVE_MODEL)
-            logging.info("Restoring model at", SAVE_MODEL)
+#            logging.info("Restoring model at", SAVE_MODEL)
         else:
             sess.run(tf.global_variables_initializer())
-            logging.info("Training fresh model")
+#            logging.info("Training fresh model")
 
-        sess.run(train_it.initializer, feed_dict={x: x_training,
-            y: y_training})
+        sess.run(train_it.initializer, feed_dict={x_train: x_training,
+            y_train: y_training})
 
         t = 0
         for epoch in range(num_epochs):
@@ -186,29 +192,33 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                     # sample
                     # Build all the channels for the data.
                     x_sam, y_sam = sess.run([x_train_el, y_train_el])
-                    channel1 = sess.run(embedded1, feed_dict={inputs:x_sam[0]})
-                    channel2 = sess.run(embedded2, feed_dict={inputs:x_sam[1]})
-                    channel3 = sess.run(embedded3, feed_dict={inputs:x_sam[2]})
+#                    print("x_sam.shape", x_sam.shape)
+#                    print("y_sam.shape", y_sam.shape)
+                    x_input = []
+                    for xx in x_sam:
+                        channel1 = sess.run(embedded1, feed_dict={emb_input:xx[0]})
+                        channel2 = sess.run(embedded2, feed_dict={emb_input:xx[1]})
+                        channel3 = sess.run(embedded3, feed_dict={emb_input:xx[2]})
 
-                    # Word encoding in the shape of an image
-                    word_image = np.array([channel1, channel2, channel3])
-                    word_image = np.reshape(word_image, [299, 299, 3])
+                        # Word encoding in the shape of an image
+                        word_image = np.array([channel1, channel2, channel3])
+                        word_image = np.reshape(word_image, [299, 299, 3])
+                        x_input.append(word_image)
 
 #                    print("word_img shape", word_image.shape)
 #                    print("y_sample", type(y_sample), y_sample)
 
-                    feed_dict = {x: np.array([word_image]), y:
-                            np.array([y_sam])}
+                    feed_dict = {x: np.array(x_input), y: np.array(y_sam)}
                     loss_np, _ = sess.run([loss, train_op], feed_dict=feed_dict)
 
                     # TODO: Need to use validation accuracy instead of loss.
                     if loss_np < best_loss:
                         save_path = saver.save(sess, SAVE_MODEL)
                         best_loss = loss_np
-                        print("Iterations", t, "Loss", loss_np, 
+                        print("Iteration", t+1, "Loss", loss_np, 
                                 "Model saved in path: %s" % save_path)
-                        logging.info("Iterations", t, "Loss",
-                                loss_np, "Model saved in path: %s" % save_path)
+#                        logging.info("Iterations", t, "Loss",
+#                                loss_np, "Model saved in path: %s" % save_path)
 
                     if t % PRINT_EVERY == 0:
                         print('Iteration %d, loss = %.4f' % (t, loss_np))
@@ -224,15 +234,17 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 if __name__ == "__main__":
 
     # TODO: CHANGE DEBUG WARNING TO INFO
+    log_level = logging.WARNING
+
     if LOG_TO_FILE:
         logging.basicConfig(
                 filename=LOG_FILENAME,
                 format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] %(message)s",
-                level=logging.WARNING)
+                level=log_level)
     else:
         logging.basicConfig(
                 format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] %(message)s",
-                level=logging.WARNING)
+                level=log_level)
 
     logging.info("Train model")
     train(model_init_fn, optimizer_init_fn)

@@ -26,7 +26,21 @@ import LoadIMDB
 import LoadEmbeddings
 import MyInception
 
+# Default gensim wordvec models to use
+W2V_M1_LOC = "../data/word2vec_models/w2v_m1.model"
+W2V_M2_LOC = "../data/word2vec_models/w2v_m2.model"
+W2V_M3_LOC = "../data/word2vec_models/w2v_m3.model"
 
+NUM_WORDS = 299
+EMB_DIM = 299
+NUM_CHANNELS = 3
+HID_SIZE = 64
+NUM_LAYERS = 3
+NUM_CLASSES = 4
+PRINT_EVERY = 100
+
+
+USE_GPU = False
 cpu = 'cpu:0'
 if USE_GPU:
     device = '/device:GPU:0'
@@ -34,7 +48,7 @@ else:
     device = '/cpu:0' 
 
 training = LoadIMDB.dataset_IMDB(train=True)
-validation = LoadIMDB.dataset_IMDB(train=True, val=True)
+#validation = LoadIMDB.dataset_IMDB(train=True, val=True)
 
 x_training = training['embedding'].values
 y_training = training['rating'].values
@@ -48,7 +62,7 @@ wv_m3 = LoadEmbeddings.get_wordvec(W2V_M3_LOC)
 #x_training = np.array(temp_training)
 
 x_training = np.array([x for x in x_training]) # unpack dataset.
-validation = np.array([x for x in validation])
+#validation = np.array([x for x in validation])
 
 #    print("y_training", type(y_training), y_training.shape)
 #    print(y_training[:10])
@@ -72,7 +86,7 @@ with tf.device(cpu):
     # Build a dataset #TODO: Adjust the batch size and maybe add shuffling
     train_dset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     train_it = train_dset.make_initializable_iterator()
-    train_x_el, train_y_el = train_it.get_next()
+    x_train_el, y_train_el = train_it.get_next()
 
     # Load the emebedding the cpu
     W1 = tf.constant(wv_m1.syn0, name="W1")
@@ -85,27 +99,57 @@ with tf.device(cpu):
     embedded2 = tf.nn.embedding_lookup(W2, inputs)
     embedded3 = tf.nn.embedding_lookup(W3, inputs)
 
-    # TODO: Check if this is valid.
-#        built_sam = tf.Variable([embedded1, embedded2, embedded3])
+t=0
+my_training = []
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    sess.run(train_it.initializer, feed_dict={x_train: x_training,
+        y_train: y_training})
+    print("start converting")
+    while True:
+        try:
+            print(t),
+            t = t + 1
+            x_sam, y_sam = sess.run([x_train_el, y_train_el])
+            channel1 = sess.run(embedded1, feed_dict={inputs:x_sam[0]})
+            channel2 = sess.run(embedded1, feed_dict={inputs:x_sam[1]})
+            channel3 = sess.run(embedded1, feed_dict={inputs:x_sam[2]})
 
-# Main training enviornment.
-with tf.device(device):
-    x = tf.placeholder(tf.float32, [None, NUM_WORDS, EMB_DIM, 3],
-        name="all_sam")
-    y = tf.placeholder(tf.int32, [None, ])
-
-#        is_training = tf.placeholder(tf.bool, name='is_training')
-
-    # Build the model.
-    scores = model_init_fn(x)
-
-    loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
-            logits=scores)
-    loss = tf.reduce_mean(loss)
-
-    optimizer = optimizer_init_fn()
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    with tf.control_dependencies(update_ops):
-        train_op = optimizer.minimize(loss)
+            word_image = np.array([channel1, channel2, channel3])
+            word_image = np.reshape(word_image, [299, 299, 3])
+            my_training.append((word_image, y_train_el))
+        except tf.errors.OutOfRangeError:
+            print("done")
+    np.save("deleteMe.npy", my_training)
 
 
+
+
+
+
+
+
+
+
+
+## Main training enviornment.
+#with tf.device(device):
+#    x = tf.placeholder(tf.float32, [None, NUM_WORDS, EMB_DIM, 3],
+#        name="all_sam")
+#    y = tf.placeholder(tf.int32, [None, ])
+#
+##        is_training = tf.placeholder(tf.bool, name='is_training')
+#
+#    # Build the model.
+#    scores = model_init_fn(x)
+#
+#    loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
+#            logits=scores)
+#    loss = tf.reduce_mean(loss)
+#
+#    optimizer = optimizer_init_fn()
+#    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+#    with tf.control_dependencies(update_ops):
+#        train_op = optimizer.minimize(loss)
+#
+#
