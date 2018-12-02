@@ -13,9 +13,6 @@ class MyInception(tf.keras.Model):
             num_fc_layers=NUM_FC_LAYERS, num_classes=NUM_CLASSES):
         ''' Constructor of our Imagenet/Inception Model for sentiment analysis.
         params:
-            wv1 -- An embedding tensor used to convert input
-            wv2 -- An embedding tensor used to convert input
-            wv3 -- An embedding tensor used to convert input
             hidden_size -- Number of hidden states in FC layers
             num_fc_layers -- Number of fully connected layers at end of model.
             num_classes -- How many classes are there to predict.
@@ -43,6 +40,8 @@ class MyInception(tf.keras.Model):
 
     # Forward pass through the training loop when we call the model.
     def call(self, x, training=None):
+        ''' Expects input of the form (299, 299, 3). Returns 4 values for each
+        classification method '''
 
         # On input data, we will need to convert the embed vectors into their
         # true embeddings using out embedding models.
