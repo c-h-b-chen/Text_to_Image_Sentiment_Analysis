@@ -152,23 +152,29 @@ def get_emb_IMDB(w2v_m1_loc=W2V_M1_LOC, w2v_m2_loc=W2V_M2_LOC,
     data.to_pickle(file_dir)
     return data
 
-def dataset_IMDB(train=True):
+def dataset_IMDB(train=True, val=False):
     # Get the positive and negative datasets
     pos = get_emb_IMDB(train=train, positive=True)
     neg = get_emb_IMDB(train=train, positive=False)
 
-    # combine the dataset, shuffle the data.
-    data = pd.concat([pos, neg])
-    data = data.sample(frac=1)
-    return data
+    if val == True:
+        data = pd.concat([pos[:2500], neg[:2500]])
+        return data.sample(frac=1)
+    elif train == False:
+        data = rd.concat([pos[:2500], neg[:2500]])
+        return data.sample(frac=1)
+    else:
+        # combine the dataset, shuffle the data.
+        data = pd.concat([pos, neg])
+        return data.sample(frac=1)
     
 
 if __name__ == '__main__':
     # Build all the normal dataframes.
-    get_IMDB(train=True, positive=True)
-    get_IMDB(train=True, positive=False)
-    get_IMDB(train=False, positive=True)
-    get_IMDB(train=False, positive=False)
+    print("Train, pos:", get_IMDB(train=True, positive=True).shape)
+    print("Train neg:", get_IMDB(train=True, positive=False).shape)
+    print("Test pos:", get_IMDB(train=False, positive=True).shape)
+    print("Test neg:", get_IMDB(train=False, positive=False).shape)
 
     get_emb_IMDB(train=True, positive=True)
     get_emb_IMDB(train=True, positive=False)
