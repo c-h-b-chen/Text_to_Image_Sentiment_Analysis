@@ -26,7 +26,12 @@ def get_lines(df_list):
             train_corpus.append(review.split())
     return train_corpus
 
+def get_embedding_matrix(which_embedding):
+    ''' Returns the numpy matrix of the embedding we wish to find'''
+    return (get_wordvec(which_embedding)).syn0
+
 def get_embedding(which_embedding):
+    ''' Return the wv model '''
 
     # String of the model we should try to load.
 #    trained_embedding = "w2v_m%s" % which_embedding

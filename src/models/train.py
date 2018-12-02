@@ -1,19 +1,19 @@
+import datetime
+import logging
+import numpy as np
+import os 
+import pandas as pd
+import sys
 import tensorflow as tf
 
-import numpy as np
-import pandas as pd
-import os 
-import sys
 sys.path.insert(0, '../helpers/') 
-
-# from LoadIMDB import dataset_IMDB
-# from LoadEmbeddings import get_wordvec
 
 import LoadIMDB
 import LoadEmbeddings
 import MyInception
+# from LoadIMDB import dataset_IMDB
+# from LoadEmbeddings import get_wordvec
 
-#USE_GPU = False
 USE_GPU = True
 
 NUM_WORDS = 299
@@ -22,13 +22,21 @@ NUM_CHANNELS = 3
 HID_SIZE = 64
 NUM_LAYERS = 3
 NUM_CLASSES = 4
-PRINT_EVERY = 10
+PRINT_EVERY = 100
 
 # Default gensim wordvec models to use
 W2V_M1_LOC = "../data/word2vec_models/w2v_m1.model"
 W2V_M2_LOC = "../data/word2vec_models/w2v_m2.model"
 W2V_M3_LOC = "../data/word2vec_models/w2v_m3.model"
 
+# Default save path of model.
+SAVE_MODEL = "../data/checkpoint/cp.ckpt"
+
+LOG_FILENAME = "../data/logs/inception.log"
+
+def time_stamp():
+    ''' Return a string representation of the time '''
+    return datetime.datetime.now().strftime("%d-%m-%Y %I:%M:%S %p: ")
 
 def check_accuracy(sess, dset, x, scores, is_training=None):
     """
@@ -60,7 +68,7 @@ def model_init_fn(inputs):
 
 def optimizer_init_fn():
     ''' What type of optimizer do we want to use? '''
-    learning_rate = 0.1
+    learning_rate = 0.01
     return tf.train.GradientDescentOptimizer(learning_rate)
 
 
@@ -87,13 +95,14 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
     temp_training = [x for x in x_training]
     x_training = np.array(temp_training)
 
-    print("y_training", type(y_training), y_training.shape)
-    print(y_training[:10])
+#    print("y_training", type(y_training), y_training.shape)
+#    print(y_training[:10])
 
-    print(type(x_training), x_training.shape)
-    print(type(x_training[0]), x_training[0].shape)
-    print(type(x_training[0][0]), x_training[0][0].shape)
-    print(type(x_training[0][0][0]))
+#    print(type(x_training), x_training.shape)
+#    print(type(x_training[0]), x_training[0].shape)
+#    print(type(x_training[0][0]), x_training[0][0].shape)
+#    print(type(x_training[0][0][0]))
+
 
     # Start building data tensors
 
@@ -144,9 +153,18 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         with tf.control_dependencies(update_ops):
             train_op = optimizer.minimize(loss)
 
+
+    best_loss = 10000 # FIXME: Change this arbitrary loss value.
+    saver = tf.train.Saver()
     config = tf.ConfigProto(allow_soft_placement=True)
     with tf.Session(config=config) as sess:
-        sess.run(tf.global_variables_initializer())
+        if (tf.train.checkpoint_exists(SAVE_MODEL)):
+            saver.restore(sess, SAVE_MODEL)
+            logging.info(time_stamp, "Restoring model at", SAVE_MODEL)
+        else:
+            sess.run(tf.global_variables_initializer())
+            logging.info(time_stamp, "Training fresh model")
+
         sess.run(train_it.initializer, feed_dict={x_train: x_training,
             y_train: y_training})
 
@@ -175,14 +193,28 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                     feed_dict = {x: np.array([word_image]), y:
                             np.array([y_sample])}
                     loss_np, _ = sess.run([loss, train_op], feed_dict=feed_dict)
+
+                    # TODO: Need to use validation accuracy instead of loss.
+                    if loss_np < best_loss:
+                        save_path = saver.save(sess, SAVE_MODEL)
+                        best_loss = loss_np
+                        print("Iterations", t, "Loss", loss_np, 
+                                "Model saved in path: %s" % save_path)
+                        logging.info(time_stamp, "Iterations", t, "Loss",
+                                loss_np, "Model saved in path: %s" % save_path)
+
                     if t % PRINT_EVERY == 0:
                         print('Iteration %d, loss = %.4f' % (t, loss_np))
+                        logging.info(time_stamp, 'Iteration %d, loss = %.4f' %
+                                (t, loss_np))
 #                        check_accuracy(sess, val_dset, x, scores, is_training=is_training)
-                        print()
                     t += 1
                 except tf.errors.OutOfRangeError:
+                    logging.info(time_stamp, "Complete epoch:", epoch + 1)
                     pass
     
 if __name__ == "__main__":
+    # TODO: CHANGE DEBUG WARNING TO INFO
+    logging.basicConfig(filename=LOG_FILENAME ,level=logging.WARNING)
+    logging.info(time_stamp, "Train model")
     train(model_init_fn, optimizer_init_fn)
-#    demo_train(model_init_fn, optimizer_init_fn)

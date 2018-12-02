@@ -22,8 +22,15 @@ ITEMS_TO_REMOVE = ['<br />', '.', ',', '*', '-', '%', '$', ';', '=', '[', ']',
 def gen_image_format(review, wv_m1, wv_m2, wv_m3):
     emb_review = []
     for wv in [wv_m1, wv_m2, wv_m3]:
-        emb_review.append([wv.vocab[word].index for word in review.split()])
-    return emb_review[:NUM_WORDS]
+        item = [wv.vocab[word].index for word in review.split()]
+# FIXME: Decide what should be filled with. At the moment, its filled with 0
+# index which might map to some word. Figure out what we should map to instead.
+        while len(item) < NUM_WORDS:
+#            emb_review.append(wv.vocab[" "].index)
+            item.append(0)
+        emb_review.append(np.array(item[:NUM_WORDS]).flatten())
+
+    return np.array(emb_review)
 
 def convert_rating(rating):
     ''' Helper function to convert 'rating' column of the dataframes to 1 of 4 
@@ -136,11 +143,12 @@ def get_emb_IMDB(w2v_m1_loc=W2V_M1_LOC, w2v_m2_loc=W2V_M2_LOC,
 #    wv_m2 = gensim.models.KeyedVectors.load(w2v_m2_loc, mmap='r')
 #    wv_m3 = gensim.models.KeyedVectors.load(w2v_m3_loc, mmap='r')
 
-    # Don't have a pickled file. Make it
+# TODO: Need to filter the data such that it 299 in 
 
+    # Don't have a pickled file. Make it
     data = get_IMDB(train=train, positive=positive)
     data['embedding'] = [gen_image_format(sub, wv_m1, wv_m2, wv_m3) for sub in
-        data['review']]
+        data['review'].values]
     data.to_pickle(file_dir)
     return data
 

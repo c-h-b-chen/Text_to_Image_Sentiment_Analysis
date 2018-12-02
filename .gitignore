@@ -1,6 +1,7 @@
 .DS_Store
 results
 .*.swp
+.nfs*
 
 src/data/aclImdb
 !src/data/aclImdb/.gitkeep
@@ -10,3 +11,9 @@ src/data/pickled
 
 src/data/word2vec_models
 !src/data/word2vec_models/.gitkeep
+
+src/data/checkpoint
+!src/data/checkpoint/.gitkeep
+
+src/data/logs
+!src/data/logs/.gitkeep
