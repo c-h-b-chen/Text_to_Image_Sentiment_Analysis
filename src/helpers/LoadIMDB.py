@@ -16,6 +16,8 @@ W2V_M1_LOC = "../data/word2vec_models/w2v_m1.model"
 W2V_M2_LOC = "../data/word2vec_models/w2v_m2.model"
 W2V_M3_LOC = "../data/word2vec_models/w2v_m3.model"
 
+VAL_SIZE = 2000
+
 ITEMS_TO_REMOVE = ['<br />', '.', ',', '*', '-', '%', '$', ';', '=', '[', ']',
         '(', ')', '&', '#', '@']
 
@@ -157,11 +159,13 @@ def dataset_IMDB(train=True, val=False):
     pos = get_emb_IMDB(train=train, positive=True)
     neg = get_emb_IMDB(train=train, positive=False)
 
+    
+    size = int(VAL_SIZE/2)
     if val == True:
-        data = pd.concat([pos[:2500], neg[:2500]])
+        data = pd.concat([pos[:size], neg[:size]])
         return data.sample(frac=1)
     elif train == False:
-        data = rd.concat([pos[:2500], neg[:2500]])
+        data = rd.concat([pos[:size], neg[:size]])
         return data.sample(frac=1)
     else:
         # combine the dataset, shuffle the data.

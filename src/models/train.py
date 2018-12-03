@@ -30,24 +30,24 @@ W2V_M3_LOC = "../data/word2vec_models/w2v_m3.model"
 EMB_DIM = 299
 NUM_CHANNELS = 3
 NUM_WORDS = 299
+LEARNING_RATE = 0.001
 HID_SIZE = 64
 
 NUM_CLASSES = 4
 NUM_LAYERS = 3
 
-BATCH_SIZE = 100
-PRINT_EVERY = 100
+BATCH_SIZE = 1
+PRINT_EVERY = 5
 #NUM_EPOCHS = 1000
 
 
-
-def check_accuracy(sess, dset, x, scores):
+def check_accuracy(sess, val_dset, x, scores):
     """
     Check accuracy on a classification model.
     
     Inputs:
     - sess: A TensorFlow Session that will be used to run the graph
-    - dset: A Dataset object on which to check accuracy
+    - val_dset: A numpy array object on which to check accuracy
     - x: A TensorFlow placeholder Tensor where input images should be fed
     - scores: A TensorFlow Tensor representing the scores output from the
       model; this is the Tensor we will ask TensorFlow to evaluate.
@@ -55,13 +55,16 @@ def check_accuracy(sess, dset, x, scores):
     Returns: Nothing, but prints the accuracy of the model to the logger.
     """
     num_correct, num_samples = 0, 0
-    for x_batch, y_batch in dset:
-#        feed_dict = {x: x_batch, is_training: 0}
-        feed_dict = {x: x_batch}
-        scores_np = sess.run(scores, feed_dict=feed_dict)
-        y_pred = scores_np.argmax(axis=1)
-        num_samples += x_batch.shape[0]
-        num_correct += (y_pred == y_batch).sum()
+    print(val_dset.shape)
+    x_batch = np.array([x for x,y in val_dset])
+    y_batch = np.array([y for x,y in val_dset])
+    print(x_batch.shape)
+    print(y_batch.shape)
+    feed_dict = {x: x_batch}
+    scores_np = sess.run(scores, feed_dict=feed_dict)
+    y_pred = scores_np.argmax(axis=1)
+    num_samples += x_batch.shape[0]
+    num_correct += (y_pred == y_batch).sum()
     acc = float(num_correct) / num_samples
     print('Got %d / %d correct (%.2f%%)' % (num_correct, num_samples, 100*acc))
 
@@ -70,9 +73,8 @@ def model_init_fn(inputs):
     return MyInception.MyInception(hidden_size=HID_SIZE, 
             num_fc_layers=NUM_LAYERS, num_classes=NUM_CLASSES)(inputs)
 
-def optimizer_init_fn():
+def optimizer_init_fn(learning_rate=LEARNING_RATE):
     ''' What type of optimizer do we want to use? '''
-    learning_rate = 0.01
     return tf.train.GradientDescentOptimizer(learning_rate)
 
 
@@ -91,19 +93,19 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 
     x_training = training['embedding'].values
     y_training = training['rating'].values
+    del training
+
+    x_val = validation['embedding'].values
+    y_val = validation['rating'].values
+    del validation
 
     wv_m1 = LoadEmbeddings.get_wordvec(W2V_M1_LOC)
     wv_m2 = LoadEmbeddings.get_wordvec(W2V_M2_LOC)
     wv_m3 = LoadEmbeddings.get_wordvec(W2V_M3_LOC)
 
     # Dimension reduce the array.
-#    temp_training = [x for x in x_training]
-#    x_training = np.array(temp_training)
     x_training = np.array([x for x in x_training])
-    validation = np.array([x for x in validation])
-
-#    print("y_training", type(y_training), y_training.shape)
-#    print(y_training[:10])
+    x_val = np.array([x for x in x_val])
 
 #    print(type(x_training), x_training.shape)
 #    print(type(x_training[0]), x_training[0].shape)
@@ -183,6 +185,25 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         sess.run(train_it.initializer, feed_dict={x_train: x_training,
             y_train: y_training})
 
+        # Pre embed the validiation dataset for quick val testing
+        sess.run(val_it.initializer, feed_dict={x_train: x_val, y_train: y_val})
+
+        my_validation = [] # This is the pre embedded validation set.
+        print("Building validation set")
+        while True:
+            try:
+                x_sam, y_sam = sess.run([x_val_el, y_val_el])
+                channel1 = sess.run(embedded1, feed_dict={emb_input:x_sam[0]})
+                channel2 = sess.run(embedded1, feed_dict={emb_input:x_sam[1]})
+                channel3 = sess.run(embedded1, feed_dict={emb_input:x_sam[2]})
+
+                word_image = np.array([channel1, channel2, channel3])
+                word_image = np.reshape(word_image, [NUM_WORDS, EMB_DIM, 3])
+                my_validation.append((word_image, y_sam))
+            except tf.errors.OutOfRangeError:
+                break
+        my_validation = np.array(my_validation)
+
         t = 0
         for epoch in range(num_epochs):
             print('Starting epoch %d' % epoch)
@@ -192,8 +213,6 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                     # sample
                     # Build all the channels for the data.
                     x_sam, y_sam = sess.run([x_train_el, y_train_el])
-#                    print("x_sam.shape", x_sam.shape)
-#                    print("y_sam.shape", y_sam.shape)
                     x_input = []
                     for xx in x_sam:
                         channel1 = sess.run(embedded1, feed_dict={emb_input:xx[0]})
@@ -202,11 +221,8 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 
                         # Word encoding in the shape of an image
                         word_image = np.array([channel1, channel2, channel3])
-                        word_image = np.reshape(word_image, [299, 299, 3])
+                        word_image = np.reshape(word_image, [NUM_WORDS, EMB_DIM, 3])
                         x_input.append(word_image)
-
-#                    print("word_img shape", word_image.shape)
-#                    print("y_sample", type(y_sample), y_sample)
 
                     feed_dict = {x: np.array(x_input), y: np.array(y_sam)}
                     loss_np, _ = sess.run([loss, train_op], feed_dict=feed_dict)
@@ -224,7 +240,8 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                         print('Iteration %d, loss = %.4f' % (t, loss_np))
                         logging.info('Iteration %d, loss = %.4f' %
                                 (t, loss_np))
-#                        check_accuracy(sess, val_dset, x, scores)
+                        print("start check acc")
+                        check_accuracy(sess, my_validation, x, scores)
                     t += 1
                 except tf.errors.OutOfRangeError:
                     logging.info("Complete epoch:", epoch + 1)
