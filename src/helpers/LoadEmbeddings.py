@@ -2,6 +2,7 @@
 import gensim
 import pandas as pd
 import os
+import Settings
 import time
 import warnings
 
@@ -9,8 +10,9 @@ import LoadIMDB
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-DEFAULT_EMBEDDING_SIZE = 299
+DEFAULT_EMBEDDING_SIZE = Settings.EMB_DIM
 PRINT_DEBUG = True
+NUM_CPU = 4
 
 def get_lines(df_list):
     ''' 
@@ -59,12 +61,12 @@ def get_embedding(which_embedding):
 
     start_time = time.time()
     model = gensim.models.Word2Vec(my_lines, size=DEFAULT_EMBEDDING_SIZE,
-            window=5, workers=8, min_count=1)
+            window=5, workers=NUM_CPU, min_count=1)
 
     print("--- %s seconds to train word2vec_m%s---" % 
             ((time.time()-start_time), which_embedding))
-    print("Saved --- w2v_m1 --- in ../data/word2vec_models/w2v_m%s.model" %
-            which_embedding)
+    print("Saved --- w2v_m%s --- in ../data/word2vec_models/w2v_m%s.model" %
+            (which_embedding, which_embedding))
 
     model.wv.save("../data/word2vec_models/w2v_m%s.model" % which_embedding)
     return model
@@ -78,4 +80,11 @@ if __name__ == "__main__":
     get_embedding(1)
     get_embedding(2)
     get_embedding(3)
+
+    LoadIMDB.get_emb_IMDB(train=True, positive=True)
+    LoadIMDB.get_emb_IMDB(train=True, positive=False)
+    LoadIMDB.get_emb_IMDB(train=False, positive=True)
+    LoadIMDB.get_emb_IMDB(train=False, positive=False)
+
+
 

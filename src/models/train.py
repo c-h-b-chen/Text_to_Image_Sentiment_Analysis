@@ -11,35 +11,47 @@ sys.path.insert(0, '../helpers/')
 import LoadIMDB
 import LoadEmbeddings
 import MyInception
+import Settings
 
 
 # Global Variables
 
-USE_GPU = True
+USE_GPU = Settings.USE_GPU
 
-LOG_TO_FILE = False
+LOG_TO_FILE = Settings.LOG_TO_FILE
 
 LOG_FILENAME = "../data/logs/inception.log"
 SAVE_MODEL = "../data/checkpoint/cp.ckpt" # Default save path of model.
+SAVE = Settings.SAVE
+LOAD_SAVED = Settings.LOAD_SAVED
 
 # Default gensim wordvec models to use
 W2V_M1_LOC = "../data/word2vec_models/w2v_m1.model"
 W2V_M2_LOC = "../data/word2vec_models/w2v_m2.model"
 W2V_M3_LOC = "../data/word2vec_models/w2v_m3.model"
 
-EMB_DIM = 299
-NUM_CHANNELS = 3
-NUM_WORDS = 299
-LEARNING_RATE = 0.001
-HID_SIZE = 64
+EMB_DIM = Settings.EMB_DIM
+NUM_CHANNELS = Settings.NUM_CHANNELS
+NUM_WORDS = Settings.NUM_WORDS
+LEARNING_RATE = Settings.LEARNING_RATE
+HID_SIZE = Settings.HID_SIZE
 
-NUM_CLASSES = 4
-NUM_LAYERS = 3
+NUM_CLASSES = Settings.NUM_CLASSES
+NUM_LAYERS = Settings.NUM_LAYERS
 
-BATCH_SIZE = 1
-PRINT_EVERY = 5
+BATCH_SIZE = Settings.BATCH_SIZE
+PRINT_EVERY = Settings.PRINT_EVERY
 #NUM_EPOCHS = 1000
 
+def model_init_fn(inputs):
+    ''' How do you want the model to instantiated '''
+    return MyInception.MyInception(hidden_size=HID_SIZE, 
+            num_fc_layers=NUM_LAYERS, num_classes=NUM_CLASSES)(inputs)
+
+def optimizer_init_fn(learning_rate=LEARNING_RATE):
+    ''' What type of optimizer do we want to use? '''
+    return tf.train.GradientDescentOptimizer(learning_rate)
+#    return tf.train.AdamOptimizer(learning_rate=learning_rate)
 
 def check_accuracy(sess, val_dset, x, scores):
     """
@@ -55,11 +67,8 @@ def check_accuracy(sess, val_dset, x, scores):
     Returns: Nothing, but prints the accuracy of the model to the logger.
     """
     num_correct, num_samples = 0, 0
-    print(val_dset.shape)
     x_batch = np.array([x for x,y in val_dset])
     y_batch = np.array([y for x,y in val_dset])
-    print(x_batch.shape)
-    print(y_batch.shape)
     feed_dict = {x: x_batch}
     scores_np = sess.run(scores, feed_dict=feed_dict)
     y_pred = scores_np.argmax(axis=1)
@@ -67,16 +76,7 @@ def check_accuracy(sess, val_dset, x, scores):
     num_correct += (y_pred == y_batch).sum()
     acc = float(num_correct) / num_samples
     print('Got %d / %d correct (%.2f%%)' % (num_correct, num_samples, 100*acc))
-
-def model_init_fn(inputs):
-    ''' How do you want the model to instantiated '''
-    return MyInception.MyInception(hidden_size=HID_SIZE, 
-            num_fc_layers=NUM_LAYERS, num_classes=NUM_CLASSES)(inputs)
-
-def optimizer_init_fn(learning_rate=LEARNING_RATE):
-    ''' What type of optimizer do we want to use? '''
-    return tf.train.GradientDescentOptimizer(learning_rate)
-
+    return acc
 
 def train(model_init_fn, optimizer_init_fn, num_epochs=1):
     ''' Test training method for converting embeddings before feeding into
@@ -119,7 +119,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         # Features used to train. Contains 3 channels. Must convert all 3
         emb_input = tf.placeholder(tf.int32, [None,], name='word_ids')
 
-        x_train = tf.placeholder(tf.int32, shape=[None, 3, 299], 
+        x_train = tf.placeholder(tf.int32, shape=[None, 3, NUM_WORDS], 
                 name="raw_input")
         y_train = tf.placeholder(tf.int32, shape=[None,], name="rating")
 
@@ -141,7 +141,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         W3 = tf.constant(wv_m1.syn0, name="W3")
 
         # Tensor that will perform the conversion to true embedding vector. 
-        # inputs should be of shape (299,)
+        # inputs should be of shape (NUM_WORDS,)
         embedded1 = tf.nn.embedding_lookup(W1, emb_input)
         embedded2 = tf.nn.embedding_lookup(W2, emb_input)
         embedded3 = tf.nn.embedding_lookup(W3, emb_input)
@@ -163,6 +163,10 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
                 logits=scores)
+
+#        sm = tf.nn.softmax(scores)
+#        loss = tf.losses.mean_squared_error(labels=y, predictions=sm)
+
         loss = tf.reduce_mean(loss)
 
         optimizer = optimizer_init_fn()
@@ -171,13 +175,13 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
             train_op = optimizer.minimize(loss)
 
 
-    best_loss = 10000 # FIXME: Change this arbitrary loss value.
+    best_val_acc = 0.0
     saver = tf.train.Saver()
     config = tf.ConfigProto(allow_soft_placement=True)
     with tf.Session(config=config) as sess:
-        if (tf.train.checkpoint_exists(SAVE_MODEL)):
+        if (LOAD_SAVED and tf.train.checkpoint_exists(SAVE_MODEL)):
             saver.restore(sess, SAVE_MODEL)
-#            logging.info("Restoring model at", SAVE_MODEL)
+#            logging.info("Restoring model at" + SAVE_MODEL)
         else:
             sess.run(tf.global_variables_initializer())
 #            logging.info("Training fresh model")
@@ -206,6 +210,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 
         t = 0
         for epoch in range(num_epochs):
+
             print('Starting epoch %d' % epoch)
             while True:
                 try:
@@ -227,24 +232,20 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                     feed_dict = {x: np.array(x_input), y: np.array(y_sam)}
                     loss_np, _ = sess.run([loss, train_op], feed_dict=feed_dict)
 
-                    # TODO: Need to use validation accuracy instead of loss.
-                    if loss_np < best_loss:
-                        save_path = saver.save(sess, SAVE_MODEL)
-                        best_loss = loss_np
-                        print("Iteration", t+1, "Loss", loss_np, 
-                                "Model saved in path: %s" % save_path)
-#                        logging.info("Iterations", t, "Loss",
-#                                loss_np, "Model saved in path: %s" % save_path)
 
                     if t % PRINT_EVERY == 0:
                         print('Iteration %d, loss = %.4f' % (t, loss_np))
-                        logging.info('Iteration %d, loss = %.4f' %
-                                (t, loss_np))
-                        print("start check acc")
-                        check_accuracy(sess, my_validation, x, scores)
+#                        logging.info('Iteration %d, loss = %.4f' % (t, loss_np))
+#                        print("start check acc")
+                        acc = check_accuracy(sess, my_validation, x, scores)
+                        if SAVE and acc < best_val_acc:
+                            save_path = saver.save(sess, SAVE_MODEL)
+                            best_loss = loss_np
+                            print("Iteration %d, loss = %.4f, (val_acc = %.2): \ Model saved in path %s" % (t, loss_np, save_path, 100*acc))
+
                     t += 1
                 except tf.errors.OutOfRangeError:
-                    logging.info("Complete epoch:", epoch + 1)
+#                    logging.info("Complete epoch: " + (epoch + 1))
                     pass
 
     

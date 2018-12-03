@@ -3,6 +3,7 @@
 import numpy as np
 import gensim
 import pandas as pd
+import Settings
 import os # For working with file directory.
 
 import LoadEmbeddings
@@ -10,13 +11,13 @@ import LoadEmbeddings
 DEFAULT_PICKLE_LOCATION = '../data/pickled/'
 DEFAULT_DATA_DIRECTORY = '../data/aclImdb/'
 PRINT_DEBUG = True
-NUM_WORDS = 299
+NUM_WORDS = Settings.NUM_WORDS
 
 W2V_M1_LOC = "../data/word2vec_models/w2v_m1.model"
 W2V_M2_LOC = "../data/word2vec_models/w2v_m2.model"
 W2V_M3_LOC = "../data/word2vec_models/w2v_m3.model"
 
-VAL_SIZE = 2000
+VAL_SIZE = Settings.VAL_SIZE
 
 ITEMS_TO_REMOVE = ['<br />', '.', ',', '*', '-', '%', '$', ';', '=', '[', ']',
         '(', ')', '&', '#', '@']
@@ -180,9 +181,5 @@ if __name__ == '__main__':
     print("Test pos:", get_IMDB(train=False, positive=True).shape)
     print("Test neg:", get_IMDB(train=False, positive=False).shape)
 
-    get_emb_IMDB(train=True, positive=True)
-    get_emb_IMDB(train=True, positive=False)
-    get_emb_IMDB(train=False, positive=True)
-    get_emb_IMDB(train=False, positive=False)
 
 
