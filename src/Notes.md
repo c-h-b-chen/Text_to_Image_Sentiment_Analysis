@@ -19,6 +19,10 @@ Train Negative -- 10000
 
 * Took 5 samples from the test set to use as the validation set.
 
+# W2V
+Changed window size for each of the word2vec models. Hopefully it will promote
+different amount of variance.
+
 
 # Ideas/TODOS
 

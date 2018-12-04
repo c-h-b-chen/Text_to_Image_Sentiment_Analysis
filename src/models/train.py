@@ -11,6 +11,7 @@ sys.path.insert(0, '../helpers/')
 import LoadIMDB
 import LoadEmbeddings
 import MyInception
+import MyCNN
 import Settings
 
 
@@ -20,8 +21,10 @@ USE_GPU = Settings.USE_GPU
 
 LOG_TO_FILE = Settings.LOG_TO_FILE
 
+USE_TRANSFER = Settings.USE_TRANSFER
+
 LOG_FILENAME = "../data/logs/inception.log"
-SAVE_MODEL = "../data/checkpoint/cp.ckpt" # Default save path of model.
+SAVE_MODEL = "../data/checkpoint/Incep1.ckpt" # Default save path of model.
 SAVE = Settings.SAVE
 LOAD_SAVED = Settings.LOAD_SAVED
 
@@ -34,6 +37,7 @@ EMB_DIM = Settings.EMB_DIM
 NUM_CHANNELS = Settings.NUM_CHANNELS
 NUM_WORDS = Settings.NUM_WORDS
 LEARNING_RATE = Settings.LEARNING_RATE
+MOMENTUM = Settings.MOMENTUM
 HID_SIZE = Settings.HID_SIZE
 
 NUM_CLASSES = Settings.NUM_CLASSES
@@ -43,14 +47,24 @@ BATCH_SIZE = Settings.BATCH_SIZE
 PRINT_EVERY = Settings.PRINT_EVERY
 #NUM_EPOCHS = 1000
 
+CHANNEL_1 = Settings.CHANNEL_1
+CHANNEL_2 = Settings.CHANNEL_2
+
+
 def model_init_fn(inputs):
     ''' How do you want the model to instantiated '''
-    return MyInception.MyInception(hidden_size=HID_SIZE, 
-            num_fc_layers=NUM_LAYERS, num_classes=NUM_CLASSES)(inputs)
+    if USE_TRANSFER:
+        return MyInception.MyInception(hidden_size=HID_SIZE, 
+                num_fc_layers=NUM_LAYERS, num_classes=NUM_CLASSES)(inputs)
+    else:
+        return MyCNN.MyCNN(CHANNEL_1, CHANNEL_2, hidden_size=HID_SIZE, 
+                num_fc_layers=NUM_LAYERS, num_classes=NUM_CLASSES)(inputs)
+        
 
 def optimizer_init_fn(learning_rate=LEARNING_RATE):
     ''' What type of optimizer do we want to use? '''
     return tf.train.GradientDescentOptimizer(learning_rate)
+#    return tf.train.MomentumOptimizer(learning_rate, 0.9, use_nesterov=True)
 #    return tf.train.AdamOptimizer(learning_rate=learning_rate)
 
 def check_accuracy(sess, val_dset, x, scores):
@@ -107,11 +121,6 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
     x_training = np.array([x for x in x_training])
     x_val = np.array([x for x in x_val])
 
-#    print(type(x_training), x_training.shape)
-#    print(type(x_training[0]), x_training[0].shape)
-#    print(type(x_training[0][0]), x_training[0][0].shape)
-#    print(type(x_training[0][0][0]))
-
     # Start building data tensors
 
     # Weights must be on cpu because embedding doesn't support GPU
@@ -146,10 +155,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         embedded2 = tf.nn.embedding_lookup(W2, emb_input)
         embedded3 = tf.nn.embedding_lookup(W3, emb_input)
 
-        # TODO: Check if this is valid.
-#        built_sam = tf.Variable([embedded1, embedded2, embedded3])
-
-    # Main training enviornment.
+    # Main training enviornment can be GPU if have one.
     with tf.device(device):
         # These are direct inputs into the training model.
         x = tf.placeholder(tf.float32, [None, NUM_WORDS, EMB_DIM, 3],
@@ -164,8 +170,9 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
                 logits=scores)
 
+# FIXME: Experiment with other losses.
 #        sm = tf.nn.softmax(scores)
-#        loss = tf.losses.mean_squared_error(labels=y, predictions=sm)
+#        loss = tf.losses.mean_squared_error(labels=y, predictions=scores)
 
         loss = tf.reduce_mean(loss)
 
@@ -173,7 +180,6 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             train_op = optimizer.minimize(loss)
-
 
     best_val_acc = 0.0
     saver = tf.train.Saver()
@@ -230,19 +236,20 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                         x_input.append(word_image)
 
                     feed_dict = {x: np.array(x_input), y: np.array(y_sam)}
+#                    print("score", sess.run(scores, feed_dict=feed_dict)) # TODO: Delete 
                     loss_np, _ = sess.run([loss, train_op], feed_dict=feed_dict)
 
 
                     if t % PRINT_EVERY == 0:
                         print('Iteration %d, loss = %.4f' % (t, loss_np))
-#                        logging.info('Iteration %d, loss = %.4f' % (t, loss_np))
-#                        print("start check acc")
+                        logging.info('Epoch %d, Iteration %d, loss = %.4f' %
+                                (epoch, t, loss_np))
+                        print("Checking accuracy ", end=" ")
                         acc = check_accuracy(sess, my_validation, x, scores)
-                        if SAVE and acc < best_val_acc:
+                        if SAVE and acc >= best_val_acc:
                             save_path = saver.save(sess, SAVE_MODEL)
-                            best_loss = loss_np
-                            print("Iteration %d, loss = %.4f, (val_acc = %.2): \ Model saved in path %s" % (t, loss_np, save_path, 100*acc))
-
+                            best_val_acc = acc
+                            print("Epoch %d, Iteration %d, loss = %.4f, (val_acc = %.2f%%): Model saved in path %s" % (epoch, t, loss_np, 100*acc, save_path)) 
                     t += 1
                 except tf.errors.OutOfRangeError:
 #                    logging.info("Complete epoch: " + (epoch + 1))
@@ -252,7 +259,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 if __name__ == "__main__":
 
     # TODO: CHANGE DEBUG WARNING TO INFO
-    log_level = logging.WARNING
+    log_level = logging.INFO
 
     if LOG_TO_FILE:
         logging.basicConfig(
@@ -265,4 +272,12 @@ if __name__ == "__main__":
                 level=log_level)
 
     logging.info("Train model")
+
+    # Double check before we do any overwritting.
+    if (LOAD_SAVED and tf.train.checkpoint_exists(SAVE_MODEL)):
+        confirm = input("Are you sure you want to load the new model(y/N) ")
+        if confirm != 'y':
+            exit()
+
     train(model_init_fn, optimizer_init_fn)
+

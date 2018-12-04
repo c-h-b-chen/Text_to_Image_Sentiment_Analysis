@@ -1,14 +1,16 @@
 # Contains all the parameters for model training.
 
 ####### Training params ########
-SAVE= False
-LOAD_SAVED = False
+SAVE= True
+LOAD_SAVED = True
 USE_GPU = True
 LOG_TO_FILE = False
 
-VAL_SIZE = 2000
-BATCH_SIZE = 5
-PRINT_EVERY = 100
+USE_TRANSFER = False # When false, train a 2 layer cnn instead of the transfer
+
+VAL_SIZE = 500
+BATCH_SIZE = 100
+PRINT_EVERY = 10
 
 NUM_CLASSES = 4
 
@@ -17,9 +19,12 @@ EMB_DIM = 75
 NUM_WORDS = 75
 NUM_CHANNELS = 3
 
-LEARNING_RATE = 0.1
-HID_SIZE = 128
+MOMENTUM = 0.9
+LEARNING_RATE = 0.001
+HID_SIZE = 32
 
-NUM_LAYERS = 5
+NUM_LAYERS = 2
 
-
+####
+CHANNEL_1 = 13
+CHANNEL_2 = 5

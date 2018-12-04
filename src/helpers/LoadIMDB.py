@@ -42,11 +42,14 @@ def convert_rating(rating):
     if rating < 3:
         return 0
     elif rating < 5:
-        return 1
+#        return 1
+        return 0
     elif rating < 9:
-        return 2
+#        return 2
+        return 1
     else:
-        return 3
+#        return 3
+        return 1
 
 def get_IMDB(train=True, positive=True):
     '''

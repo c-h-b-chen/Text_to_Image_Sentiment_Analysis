@@ -59,9 +59,16 @@ def get_embedding(which_embedding):
 
     print('Number of reviews for training:', len(my_lines))
 
+    if which_embedding == 1:
+        window_size = 5 
+    if which_embedding == 2:
+        window_size = 3 
+    if which_embedding == 3:
+        window_size = 1 
+
     start_time = time.time()
     model = gensim.models.Word2Vec(my_lines, size=DEFAULT_EMBEDDING_SIZE,
-            window=5, workers=NUM_CPU, min_count=1)
+            window=window_size, workers=NUM_CPU, min_count=1)
 
     print("--- %s seconds to train word2vec_m%s---" % 
             ((time.time()-start_time), which_embedding))

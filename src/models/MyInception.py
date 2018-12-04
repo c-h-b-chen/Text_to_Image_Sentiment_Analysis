@@ -11,6 +11,8 @@ NUM_CLASSES = Settings.NUM_CLASSES
 NUM_HID_STATES = Settings.HID_SIZE
 NUM_FC_LAYERS = Settings.NUM_LAYERS
 
+EMB_DIM = Settings.EMB_DIM
+
 class MyInception(tf.keras.Model):
 #    def __init__(self, wv1, wv2, wv3, hidden_size=NUM_HID_LAYERS,
     def __init__(self, hidden_size=NUM_HID_STATES,
@@ -32,20 +34,20 @@ class MyInception(tf.keras.Model):
                 pooling='avg')
         self.cnn.trainable = False 
 
-        self.fullyConnected = tf.keras.Sequential()
-
         # Build the fully connect layers.
+        self.fullyConnected = tf.keras.Sequential()
         for _ in range(num_fc_layers):
             self.fullyConnected.add(tf.keras.layers.Dense(NUM_HID_STATES, 
                 activation='relu', kernel_initializer=initializer))
+#                activation='relu'))
 
         self.output_layer = tf.keras.layers.Dense(num_classes,
                 kernel_initializer=initializer)
 
     # Forward pass through the training loop when we call the model.
     def call(self, x, training=None):
-        ''' Expects input of the form (299, 299, 3). Returns 4 values for each
-        classification method '''
+        ''' Expects input of the form (NUM_WORDS, EMB_DIM, 3). Returns 4 values
+        for each classification method '''
 
         # On input data, we will need to convert the embed vectors into their
         # true embeddings using out embedding models.
@@ -82,47 +84,3 @@ def test_MyInception():
 if __name__ == "__main__":
     print("testing MyInception")
     test_MyInception()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# model = tf.keras.Sequential()
-# model.add(tf.keras.layers.Dense(64, activation='relu'))
-# model.add(tf.keras.layers.Dense(64, activation='relu'))
-# model.add(tf.keras.layers.Dense(10, activation='softmax'))
-# 
-# # Check if using GPUs
-# from tensorflow.python.client import device_lib
-# print(device_lib.list_local_devices())
-# 
-# video = keras.Input(shape=(None, 150, 150, 3), name='video')
-# cnn = InceptionV3(weights='imagenet',
-#                   include_top=False,
-#                   pooling='avg')
-# 
-# cnn.trainable = False
-# frame_features = layers.TimeDistrivuted(cnn)(video)
-# video_vector = layers.LSTM(256)(frame_features)
-#
-# # Turn a sequence of words into a vector
-# review = keras.Input(shape=(None,), dtype='int32', name='review')
-# embedded_words = layers.Embedding(input_voc_size, 256)(review)
-# question_vector = layers.LSTM(128)(embedded_words)
-
