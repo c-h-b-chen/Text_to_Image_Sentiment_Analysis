@@ -23,8 +23,12 @@ LOG_TO_FILE = Settings.LOG_TO_FILE
 
 USE_TRANSFER = Settings.USE_TRANSFER
 
-LOG_FILENAME = "../data/logs/inception.log"
-SAVE_MODEL = "../data/checkpoint/Incep1.ckpt" # Default save path of model.
+LOG_FILENAME = "../data/logs/inception.log" if Settings.USE_TRANSFER else \
+    "../data/logs/CNN.log"
+
+SAVE_MODEL = "../data/checkpoint/Incep/Incep1.ckpt" if Settings.USE_TRANSFER else \
+    "../data/checkpoint/CNN/CNN.ckpt"
+
 SAVE = Settings.SAVE
 LOAD_SAVED = Settings.LOAD_SAVED
 
@@ -90,6 +94,7 @@ def check_accuracy(sess, val_dset, x, scores):
     num_correct += (y_pred == y_batch).sum()
     acc = float(num_correct) / num_samples
     print('Got %d / %d correct (%.2f%%)' % (num_correct, num_samples, 100*acc))
+    logging.info('Got %d / %d correct (%.2f%%)' % (num_correct, num_samples, 100*acc))
     return acc
 
 def train(model_init_fn, optimizer_init_fn, num_epochs=1):
@@ -134,7 +139,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 
         # Build train dataset #TODO: Adjust batch size and maybe add shuffling
         train_dset = tf.data.Dataset.from_tensor_slices(
-                (x_train, y_train)).batch(BATCH_SIZE)
+                (x_train, y_train)).batch(BATCH_SIZE).shuffle(len(x_training))
         train_it = train_dset.make_initializable_iterator()
         x_train_el, y_train_el = train_it.get_next()
 
@@ -249,15 +254,13 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                         if SAVE and acc >= best_val_acc:
                             save_path = saver.save(sess, SAVE_MODEL)
                             best_val_acc = acc
-                            print("Epoch %d, Iteration %d, loss = %.4f, (val_acc = %.2f%%): Model saved in path %s" % (epoch, t, loss_np, 100*acc, save_path)) 
+                            print("Epoch %d, Iteration %d, Batch %d, loss = %.4f, (val_acc = %.2f%%): Model saved in path %s" % (epoch, t, BATCH_SIZE, loss_np, 100*acc, save_path)) 
                     t += 1
                 except tf.errors.OutOfRangeError:
 #                    logging.info("Complete epoch: " + (epoch + 1))
                     pass
 
-    
-if __name__ == "__main__":
-
+def handle_logging():
     # TODO: CHANGE DEBUG WARNING TO INFO
     log_level = logging.INFO
 
@@ -271,13 +274,24 @@ if __name__ == "__main__":
                 format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] %(message)s",
                 level=log_level)
 
-    logging.info("Train model")
+
+    root = logging.getLogger()
+    root.setLevel(log_level)
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setLevel(logging.DEBUG)
+    root.addHandler(handler)
+
+
+    
+if __name__ == "__main__":
+    handle_logging()
 
     # Double check before we do any overwritting.
-    if (LOAD_SAVED and tf.train.checkpoint_exists(SAVE_MODEL)):
-        confirm = input("Are you sure you want to load the new model(y/N) ")
+    if (SAVE and tf.train.checkpoint_exists(SAVE_MODEL)):
+        confirm = input("Are you sure you want to overwrite over any existing model?(y/N) ")
         if confirm != 'y':
             exit()
 
+    logging.info("Train model")
     train(model_init_fn, optimizer_init_fn)
 

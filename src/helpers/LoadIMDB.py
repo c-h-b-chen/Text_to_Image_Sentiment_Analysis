@@ -24,8 +24,10 @@ ITEMS_TO_REMOVE = ['<br />', '.', ',', '*', '-', '%', '$', ';', '=', '[', ']',
 
 def gen_image_format(review, wv_m1, wv_m2, wv_m3):
     emb_review = []
+    vocab = wv_m1.vocab.keys()
     for wv in [wv_m1, wv_m2, wv_m3]:
-        item = [wv.vocab[word].index for word in review.split()]
+        item = \
+            [wv.vocab[word.lower()].index for word in review.split() if word in vocab]
 # FIXME: Decide what should be filled with. At the moment, its filled with 0
 # index which might map to some word. Figure out what we should map to instead.
         while len(item) < NUM_WORDS:

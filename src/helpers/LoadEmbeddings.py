@@ -64,7 +64,7 @@ def get_embedding(which_embedding):
     if which_embedding == 2:
         window_size = 3 
     if which_embedding == 3:
-        window_size = 1 
+        window_size = 7 
 
     start_time = time.time()
     model = gensim.models.Word2Vec(my_lines, size=DEFAULT_EMBEDDING_SIZE,

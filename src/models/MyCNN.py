@@ -1,5 +1,3 @@
-
-
 import sys
 sys.path.insert(0, '../helpers/') 
 import tensorflow as tf
@@ -11,7 +9,7 @@ from tensorflow.keras.applications import InceptionV3
 
 NUM_CLASSES = Settings.NUM_CLASSES
 NUM_HID_STATES = Settings.HID_SIZE
-NUM_FC_LAYERS = Settings.NUM_LAYERS
+NUM_FC_LAYERS = 2 if Settings.NUM_LAYERS < 2 else Settings.NUM_LAYERS
 
 EMB_DIM = Settings.EMB_DIM
 
