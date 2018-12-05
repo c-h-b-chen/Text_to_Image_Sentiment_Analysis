@@ -10,13 +10,15 @@ from tensorflow.keras.applications import InceptionV3
 NUM_CLASSES = Settings.NUM_CLASSES
 NUM_HID_STATES = Settings.HID_SIZE
 NUM_FC_LAYERS = Settings.NUM_LAYERS
+DROPOUT_RATE = Settings.DROPOUT_RATE
 
 EMB_DIM = Settings.EMB_DIM
 
 class MyInception(tf.keras.Model):
 #    def __init__(self, wv1, wv2, wv3, hidden_size=NUM_HID_LAYERS,
     def __init__(self, hidden_size=NUM_HID_STATES,
-            num_fc_layers=NUM_FC_LAYERS, num_classes=NUM_CLASSES):
+            num_fc_layers=NUM_FC_LAYERS, num_classes=NUM_CLASSES, 
+            dropout_rate=DROPOUT_RATE):
         ''' Constructor of our Imagenet/Inception Model for sentiment analysis.
         params:
             hidden_size -- Number of hidden states in FC layers
@@ -39,6 +41,7 @@ class MyInception(tf.keras.Model):
         for _ in range(num_fc_layers):
             self.fullyConnected.add(tf.keras.layers.Dense(NUM_HID_STATES, 
                 activation='relu', kernel_initializer=initializer))
+            self.fullyConnected.add(tf.keras.layers.Dropout(dropout_rate))
 #                activation='relu'))
 
         self.output_layer = tf.keras.layers.Dense(num_classes,

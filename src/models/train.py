@@ -51,8 +51,8 @@ BATCH_SIZE = Settings.BATCH_SIZE
 PRINT_EVERY = Settings.PRINT_EVERY
 #NUM_EPOCHS = 1000
 
-CHANNEL_1 = Settings.CHANNEL_1
-CHANNEL_2 = Settings.CHANNEL_2
+CHANNEL_1 = Settings.CHANNEL_1 # Prob don't need thihs
+CHANNEL_2 = Settings.CHANNEL_2 # Prob don't need thihs
 
 
 def model_init_fn(inputs):
@@ -287,10 +287,10 @@ if __name__ == "__main__":
     handle_logging()
 
     # Double check before we do any overwritting.
-    if (SAVE and tf.train.checkpoint_exists(SAVE_MODEL)):
-        confirm = input("Are you sure you want to overwrite over any existing model?(y/N) ")
-        if confirm != 'y':
-            exit()
+#    if (SAVE and tf.train.checkpoint_exists(SAVE_MODEL)):
+#        confirm = input("Are you sure you want to overwrite over any existing model?(y/N) ")
+#        if confirm != 'y':
+#            exit()
 
     logging.info("Train model")
     train(model_init_fn, optimizer_init_fn)

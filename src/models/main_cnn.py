@@ -23,7 +23,7 @@ LOG_TO_FILE = Settings.LOG_TO_FILE
 
 USE_TRANSFER = False
 
-SAVE_MODEL = "../data/checkpoint/MySaved/Demo_Incep/Incep1.ckpt" if Settings.USE_TRANSFER else \
+SAVE_MODEL = "../data/checkpoint/MySaved/Demo_Incep/Incep1.ckpt" if USE_TRANSFER else \
     "../data/checkpoint/MySaved/Demo_CNN/CNN.ckpt"
 
 SAVE = False
