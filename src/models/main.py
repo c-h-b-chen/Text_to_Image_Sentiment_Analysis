@@ -19,12 +19,9 @@ import Settings
 
 USE_GPU = Settings.USE_GPU
 
-LOG_TO_FILE = Settings.LOG_TO_FILE
+USE_TRANSFER = True
 
-USE_TRANSFER = False
-
-SAVE_MODEL = "../data/checkpoint/MySaved/Demo_Incep/Incep1.ckpt" if Settings.USE_TRANSFER else \
-    "../data/checkpoint/MySaved/Demo_CNN/CNN.ckpt"
+SAVE_MODEL = "../data/checkpoint/MySaved/Demo_Incep/Incep1.ckpt"
 
 SAVE = False
 LOAD_SAVED = True
@@ -120,6 +117,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         saver.restore(sess, SAVE_MODEL)
 
         while True:
+            print()
             review = input(
             "\n".join(["Please give me a review about 75 words long\n",
             "(ie. I was a bit skeptical about the concept behind this show. What",
@@ -147,7 +145,8 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
             print(raw_score)
 
             rating = np.argmax(raw_score)
-            if rating < 2:
+            decision = 2 if NUM_CLASSES == 4 else 1
+            if rating < decision:
                 print(":(")
             else:
                 print(":)")

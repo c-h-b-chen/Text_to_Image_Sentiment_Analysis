@@ -244,7 +244,6 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 #                    print("score", sess.run(scores, feed_dict=feed_dict)) # TODO: Delete 
                     loss_np, _ = sess.run([loss, train_op], feed_dict=feed_dict)
 
-
                     if t % PRINT_EVERY == 0:
                         print('Iteration %d, loss = %.4f' % (t, loss_np))
                         logging.info('Epoch %d, Iteration %d, loss = %.4f' %

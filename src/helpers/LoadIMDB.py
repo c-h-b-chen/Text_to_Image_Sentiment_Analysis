@@ -12,6 +12,7 @@ DEFAULT_PICKLE_LOCATION = '../data/pickled/'
 DEFAULT_DATA_DIRECTORY = '../data/aclImdb/'
 PRINT_DEBUG = True
 NUM_WORDS = Settings.NUM_WORDS
+NUM_CLASSES = Settings.NUM_CLASSES
 
 W2V_M1_LOC = "../data/word2vec_models/w2v_m1.model"
 W2V_M2_LOC = "../data/word2vec_models/w2v_m2.model"
@@ -44,14 +45,11 @@ def convert_rating(rating):
     if rating < 3:
         return 0
     elif rating < 5:
-#        return 1
-        return 0
+        return 1 if NUM_CLASSES == 4 else 0
     elif rating < 9:
-#        return 2
-        return 1
+        return 2 if NUM_CLASSES == 4 else 1
     else:
-#        return 3
-        return 1
+        return 3 if NUM_CLASSES == 4 else 1
 
 def get_IMDB(train=True, positive=True):
     '''

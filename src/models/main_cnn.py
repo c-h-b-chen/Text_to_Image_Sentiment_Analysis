@@ -10,21 +10,17 @@ sys.path.insert(0, '../helpers/')
 
 import LoadIMDB
 import LoadEmbeddings
-import MyInception
 import MyCNN
-import Settings
+import CNNSettings as Settings
 
 
 # Global Variables
 
 USE_GPU = Settings.USE_GPU
 
-LOG_TO_FILE = Settings.LOG_TO_FILE
-
 USE_TRANSFER = False
 
-SAVE_MODEL = "../data/checkpoint/MySaved/Demo_Incep/Incep1.ckpt" if USE_TRANSFER else \
-    "../data/checkpoint/MySaved/Demo_CNN/CNN.ckpt"
+SAVE_MODEL = "../data/checkpoint/MySaved/Demo_CNN/CNN.ckpt"
 
 SAVE = False
 LOAD_SAVED = True

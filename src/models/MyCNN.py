@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, '../helpers/') 
 import tensorflow as tf
 
-import Settings
+import CNNSettings as Settings
 # from tensorflow import keras
 # from tensorflow.keras import layers
 from tensorflow.keras.applications import InceptionV3
@@ -81,4 +81,4 @@ def test_MyCNN():
 
 if __name__ == "__main__":
     print("testing MyInception")
-    test_MyInception()
+    test_MyCNN()
