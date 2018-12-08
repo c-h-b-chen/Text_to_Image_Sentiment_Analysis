@@ -9,6 +9,7 @@ from sklearn import preprocessing
 
 sys.path.insert(0, '../helpers/') 
 
+# My file imports.
 import LoadIMDB
 import LoadEmbeddings
 import MyInception
@@ -48,14 +49,15 @@ HID_SIZE = Settings.HID_SIZE
 NUM_CLASSES = Settings.NUM_CLASSES
 NUM_LAYERS = Settings.NUM_LAYERS
 
+TRAIN_SET_SIZE = Settings.TRAIN_SET_SIZE
 BATCH_SIZE = Settings.BATCH_SIZE
 PRINT_EVERY = Settings.PRINT_EVERY
-#NUM_EPOCHS = 1000
+NUM_EPOCHS = Settings.NUM_EPOCHS
 
 MAX_COLOR = Settings.MAX_COLOR
 
-CHANNEL_1 = Settings.CHANNEL_1 # Prob don't need thihs
-CHANNEL_2 = Settings.CHANNEL_2 # Prob don't need thihs
+CHANNEL_1 = Settings.CHANNEL_1 
+CHANNEL_2 = Settings.CHANNEL_2
 
 
 def model_init_fn(inputs):
@@ -96,11 +98,10 @@ def check_accuracy(sess, val_dset, x, scores):
     num_samples += x_batch.shape[0]
     num_correct += (y_pred == y_batch).sum()
     acc = float(num_correct) / num_samples
-    print('Got %d / %d correct (%.2f%%)' % (num_correct, num_samples, 100*acc))
     logging.info('Got %d / %d correct (%.2f%%)' % (num_correct, num_samples, 100*acc))
     return acc
 
-def train(model_init_fn, optimizer_init_fn, num_epochs=1):
+def train(model_init_fn, optimizer_init_fn, num_epochs=NUM_EPOCHS):
     ''' Test training method for converting embeddings before feeding into
     model
     '''
@@ -113,8 +114,8 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
     training = LoadIMDB.dataset_IMDB(train=True) # Load in the data we need.
     validation = LoadIMDB.dataset_IMDB(train=False, val=True)
 
-    x_training = training['embedding'].values
-    y_training = training['rating'].values
+    x_training = (training['embedding'].values)[:TRAIN_SET_SIZE]
+    y_training = (training['rating'].values)[:TRAIN_SET_SIZE]
     del training
 
     x_val = validation['embedding'].values
@@ -201,14 +202,11 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
             sess.run(tf.global_variables_initializer())
 #            logging.info("Training fresh model")
 
-        sess.run(train_it.initializer, feed_dict={x_train: x_training,
-            y_train: y_training})
-
         # Pre embed the validiation dataset for quick val testing
         sess.run(val_it.initializer, feed_dict={x_train: x_val, y_train: y_val})
 
         my_validation = [] # This is the pre embedded validation set.
-        print("Building validation set")
+        logging.info("Building validation set")
         scaler = preprocessing.MinMaxScaler()
         while True:
             try:
@@ -236,6 +234,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                 channel2 = np.around(channel2 * MAX_COLOR)
                 channel3 = np.around(channel3 * MAX_COLOR)
 
+
 # FIXME: attempt to scale the image.
 #                channel1 = MAX_COLOR * channel1 / tf.norm(channel1)
 #                channel2 = MAX_COLOR * channel2 / tf.norm(channel2)
@@ -248,12 +247,15 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                 break
         my_validation = np.array(my_validation)
 
-        t = 0
-        for epoch in range(num_epochs):
+        scaler = preprocessing.MinMaxScaler()
 
-            print('Starting epoch %d' % epoch)
-            scaler = preprocessing.MinMaxScaler()
+        for epoch in range(NUM_EPOCHS):
+            t = 0
+            sess.run(train_it.initializer, feed_dict={x_train: x_training,
+                y_train: y_training})
+
             while True:
+                if epoch > num_epochs: break
                 try:
                     # TODO:Scale this so that it can take more than just one
                     # sample
@@ -274,15 +276,15 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                         scaler.fit(channel3)
                         channel3 = scaler.transform(channel3)
 
-#                        channel1 = preprocessing.normalize(channel1, axis=0, norm="l1")
-#                        channel2 = preprocessing.normalize(channel2, axis=0, norm="l1")
-#                        channel3 = preprocessing.normalize(channel3, axis=0, norm="l1")
-#
-#                        print(channel1)
-#
                         channel1 = np.around(channel1 * MAX_COLOR)
                         channel2 = np.around(channel2 * MAX_COLOR)
                         channel3 = np.around(channel3 * MAX_COLOR)
+
+    #                        channel1 = preprocessing.normalize(channel1, axis=0, norm="l1")
+    #                        channel2 = preprocessing.normalize(channel2, axis=0, norm="l1")
+    #                        channel3 = preprocessing.normalize(channel3, axis=0, norm="l1")
+    #
+    #                        print(channel1)
 
                         # Word encoding in the shape of an image
                         word_image = np.array([channel1, channel2, channel3])
@@ -290,24 +292,23 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
                         x_input.append(word_image)
 
                     feed_dict = {x: np.array(x_input), y: np.array(y_sam)}
-#                    print("sm", sess.run(sm, feed_dict=feed_dict)) # TODO: Delete 
+    #                    print("sm", sess.run(sm, feed_dict=feed_dict)) # TODO: Delete 
                     loss_np, _ = sess.run([loss, train_op], feed_dict=feed_dict)
 
                     if t % PRINT_EVERY == 0:
-                        print('Iteration %d, loss = %.4f' % (t, loss_np))
-                        logging.info('Epoch %d, Iteration %d, loss = %.4f' %
-                                (epoch, t, loss_np))
-                        print("Checking accuracy ", end=" ")
                         acc = check_accuracy(sess, my_validation, x, scores)
+                        logging.info("Epoch %d, Iteration %d, Batch %d, loss = %.4f, (val_acc = %.2f%%)" % (epoch, t, BATCH_SIZE, loss_np, 100*acc)) 
                         if SAVE and acc >= best_val_acc:
                             save_path = saver.save(sess, SAVE_MODEL)
                             best_val_acc = acc
-                            print("Epoch %d, Iteration %d, Batch %d, loss = %.4f, (val_acc = %.2f%%): Model saved in path %s" % (epoch, t, BATCH_SIZE, loss_np, 100*acc, save_path)) 
-#                        print("sm", sess.run(sm, feed_dict=feed_dict)) # TODO: Delete 
+                            logging.info("Model saved to %s" % (save_path)) 
+    #                        print("sm", sess.run(sm, feed_dict=feed_dict)) # TODO: Delete 
                     t += 1
                 except tf.errors.OutOfRangeError:
-#                    logging.info("Complete epoch: " + (epoch + 1))
-                    pass
+    #                    logging.info("Complete epoch: " + (epoch + 1))
+                    print("Error")
+                    break
+                
 
 def handle_logging():
     # TODO: CHANGE DEBUG WARNING TO INFO
@@ -323,7 +324,7 @@ def handle_logging():
                 format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s] %(message)s",
                 level=log_level)
 
-
+    # Make sure logs also get printed to stderr.
     root = logging.getLogger()
     root.setLevel(log_level)
     handler = logging.StreamHandler(sys.stderr)
