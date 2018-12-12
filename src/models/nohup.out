@@ -1,0 +1,32 @@
+Train model
+loading Word2VecKeyedVectors object from ../data/word2vec_models/w2v_m1.model
+loading vectors from ../data/word2vec_models/w2v_m1.model.vectors.npy with mmap=r
+setting ignored attribute vectors_norm to None
+loaded ../data/word2vec_models/w2v_m1.model
+loading Word2VecKeyedVectors object from ../data/word2vec_models/w2v_m2.model
+loading vectors from ../data/word2vec_models/w2v_m2.model.vectors.npy with mmap=r
+setting ignored attribute vectors_norm to None
+loaded ../data/word2vec_models/w2v_m2.model
+loading Word2VecKeyedVectors object from ../data/word2vec_models/w2v_m3.model
+loading vectors from ../data/word2vec_models/w2v_m3.model.vectors.npy with mmap=r
+setting ignored attribute vectors_norm to None
+loaded ../data/word2vec_models/w2v_m3.model
+2018-12-08 02:39:49.275212: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+INFO:tensorflow:Restoring parameters from ../data/checkpoint/Incep/Incep1.ckpt
+Restoring parameters from ../data/checkpoint/Incep/Incep1.ckpt
+Building validation set
+Got 500 / 1000 correct (50.00%)
+Epoch 0, Iteration 0, Batch 20, loss = 0.9329, (val_acc = 50.00%)
+Model saved to ../data/checkpoint/Incep/Incep1.ckpt
+Got 500 / 1000 correct (50.00%)
+Epoch 0, Iteration 300, Batch 20, loss = 0.7097, (val_acc = 50.00%)
+Model saved to ../data/checkpoint/Incep/Incep1.ckpt
+Got 500 / 1000 correct (50.00%)
+Epoch 0, Iteration 600, Batch 20, loss = 0.6802, (val_acc = 50.00%)
+Model saved to ../data/checkpoint/Incep/Incep1.ckpt
+Got 500 / 1000 correct (50.00%)
+Epoch 0, Iteration 900, Batch 20, loss = 0.6935, (val_acc = 50.00%)
+Model saved to ../data/checkpoint/Incep/Incep1.ckpt
+Got 500 / 1000 correct (50.00%)
+Epoch 1, Iteration 0, Batch 20, loss = 0.6904, (val_acc = 50.00%)
+Model saved to ../data/checkpoint/Incep/Incep1.ckpt

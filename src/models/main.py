@@ -119,14 +119,15 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
         while True:
             print()
             review = input(
-            "\n".join(["Please give me a review about 75 words long\n",
-            "(ie. I was a bit skeptical about the concept behind this show. What",
-            "saves it from banality is just how creative and edgy each episode",
-            "is. The viewer has NO idea what is going to happen next. There is",
-            "no formula and the tension is often ratcheded up to excruciating",
-            "levels. There are tons of laughs here and the back stories are",
-            "woven in expertly. So many comedies are played very hammy with lots",
-            "of stereotypes.)\n\n >> "]))
+                    "Please give me a reivew about 75 words long\n\n>>")
+#            "\n".join(["Please give me a review about 75 words long\n",
+#            "(ie. I was a bit skeptical about the concept behind this show. What",
+#            "saves it from banality is just how creative and edgy each episode",
+#            "is. The viewer has NO idea what is going to happen next. There is",
+#            "no formula and the tension is often ratcheded up to excruciating",
+#            "levels. There are tons of laughs here and the back stories are",
+#            "woven in expertly. So many comedies are played very hammy with lots",
+#            "of stereotypes.)\n\n >> "]))
             if review == "":
                 break
 
@@ -142,7 +143,9 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=1):
 
             feed_dict = {x: np.array([word_image])}
             raw_score = sess.run(pred, feed_dict=feed_dict)
+            print()
             print(raw_score)
+            
 
             rating = np.argmax(raw_score)
             decision = 2 if NUM_CLASSES == 4 else 1

@@ -28,7 +28,8 @@ class MyInception(tf.keras.Model):
         super().__init__()
 
         # Default initializer we will use.
-        initializer = tf.variance_scaling_initializer(scale=2.0)
+#        initializer = tf.variance_scaling_initializer(scale=255.0)
+        initializer = tf.variance_scaling_initializer(scale=1.0)
 
         # Pooling so that we have an output 2D tensor. to work with. Make sure
         # to flatten it.
@@ -41,8 +42,8 @@ class MyInception(tf.keras.Model):
         for _ in range(num_fc_layers):
             self.fullyConnected.add(tf.keras.layers.Dense(NUM_HID_STATES, 
                 activation='relu', kernel_initializer=initializer))
-            self.fullyConnected.add(tf.keras.layers.Dropout(dropout_rate))
 #                activation='relu'))
+            self.fullyConnected.add(tf.keras.layers.Dropout(dropout_rate))
 
         self.output_layer = tf.keras.layers.Dense(num_classes,
                 kernel_initializer=initializer)

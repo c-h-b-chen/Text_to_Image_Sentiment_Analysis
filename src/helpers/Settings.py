@@ -2,16 +2,20 @@
 
 USE_TRANSFER = True # When false, train a 2 layer cnn instead of the transfer
 
-####### Training params ########
+####### File/Save params ########
 SAVE= True # Do we save the model?
-LOAD_SAVED = False # Do load a model?
+LOAD_SAVED = False # Do load a model or start from scatch.
 USE_GPU = True 
 LOG_TO_FILE = True
 
 
-VAL_SIZE = 500
-BATCH_SIZE = 30
-PRINT_EVERY = 10
+####### Data params ########
+NUM_EPOCHS = 400
+VAL_SIZE = 1000
+BATCH_SIZE = 20
+PRINT_EVERY = 300
+
+TRAIN_SET_SIZE = 24000
 
 NUM_CLASSES = 2
 
@@ -21,12 +25,14 @@ NUM_WORDS = 75
 NUM_CHANNELS = 3
 
 MOMENTUM = 0.9
-LEARNING_RATE = 0.1
-DROPOUT_RATE = 0.3
-HID_SIZE = 128
+LEARNING_RATE = 1e-4
+DROPOUT_RATE = 0.4
+HID_SIZE = 256
 
-NUM_LAYERS = 3
+NUM_LAYERS = 5
 
-####
+MAX_COLOR = 255
+
+####### CNN Model params ########
 CHANNEL_1 = 13
 CHANNEL_2 = 5

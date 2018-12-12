@@ -72,9 +72,9 @@ def model_init_fn(inputs):
 
 def optimizer_init_fn(learning_rate=LEARNING_RATE):
     ''' What type of optimizer do we want to use? '''
-    return tf.train.GradientDescentOptimizer(learning_rate)
+#    return tf.train.GradientDescentOptimizer(learning_rate)
 #    return tf.train.MomentumOptimizer(learning_rate, 0.9, use_nesterov=True)
-#    return tf.train.AdamOptimizer(learning_rate=learning_rate)
+    return tf.train.AdamOptimizer(learning_rate=learning_rate)
 
 def check_accuracy(sess, val_dset, x, scores):
     """
@@ -107,7 +107,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=NUM_EPOCHS):
     '''
     cpu = 'cpu:0'
     if USE_GPU:
-        device = '/device:GPU:0'
+        device = '/GPU:0'
     else:
         device = '/cpu:0' 
 
@@ -210,6 +210,7 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=NUM_EPOCHS):
         scaler = preprocessing.MinMaxScaler()
         while True:
             try:
+                # TODO: Break this into a separate helper fn
                 x_sam, y_sam = sess.run([x_val_el, y_val_el])
                 channel1 = sess.run(embedded1, feed_dict={emb_input:x_sam[0]})
                 channel2 = sess.run(embedded2, feed_dict={emb_input:x_sam[1]})
@@ -280,11 +281,11 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=NUM_EPOCHS):
                         channel2 = np.around(channel2 * MAX_COLOR)
                         channel3 = np.around(channel3 * MAX_COLOR)
 
-    #                        channel1 = preprocessing.normalize(channel1, axis=0, norm="l1")
-    #                        channel2 = preprocessing.normalize(channel2, axis=0, norm="l1")
-    #                        channel3 = preprocessing.normalize(channel3, axis=0, norm="l1")
-    #
-    #                        print(channel1)
+#                        channel1 = preprocessing.normalize(channel1, axis=0, norm="l1")
+#                        channel2 = preprocessing.normalize(channel2, axis=0, norm="l1")
+#                        channel3 = preprocessing.normalize(channel3, axis=0, norm="l1")
+#
+#                        print(channel1)
 
                         # Word encoding in the shape of an image
                         word_image = np.array([channel1, channel2, channel3])
@@ -306,7 +307,6 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=NUM_EPOCHS):
                     t += 1
                 except tf.errors.OutOfRangeError:
     #                    logging.info("Complete epoch: " + (epoch + 1))
-                    print("Error")
                     break
                 
 

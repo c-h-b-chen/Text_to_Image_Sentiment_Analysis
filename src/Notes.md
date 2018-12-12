@@ -29,3 +29,9 @@ different amount of variance.
 * Pre-embed all data for faster train computation time? ATM very slow.
 * Check if we need to scale the embeddings from word2vec
 * Add support for larger batch size in training.
+* Add a ratio of training data we want to train on so we can easily contol how
+  much data we pump into our model.
+* Try to overfit the data on 20 samples. This should be an easy task to do.
+* Add argument parser for better control of parameter tuning.
+* Hard warm up. Train a model on like sample till the loss is 0. Then use this
+  as the initialization of the model.
