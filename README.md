@@ -55,6 +55,17 @@ Furthermore, the training time and number of required samples will give us
 further insight on the effectiveness of using transfer learning between
 unrelated classification problems. 
 
+## How to use:
+Currently, this repo do not contain any trained checkpoints however, training a
+simple model is trivial. 
+To train a model head to ```LIGN167Project/src/models```. In here you should
+see the file ```train.py``` This file is the main driver for training a model.
+By defaul you can simply train a model by typing ```python train.py``` into the
+terminal. If you would like, you can adjust the model by editting the
+```Settings.py``` file located in ```LIGN167Project/src/helpers/```.
+
+All logs from training will be outputed to ```LIGN167Project/src/data/logs```
+
 ## Description
 ## Experiment
 ## Result
