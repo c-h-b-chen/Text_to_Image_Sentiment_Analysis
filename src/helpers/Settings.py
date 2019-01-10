@@ -1,6 +1,6 @@
 # Contains all the parameters for model training.
 
-USE_TRANSFER = True # When false, train a 2 layer cnn instead of the transfer
+USE_TRANSFER = False # When false, train a 2 layer cnn instead of the transfer
 
 ####### File/Save params ########
 SAVE= True # Do we save the model?
@@ -25,11 +25,11 @@ NUM_WORDS = 75
 NUM_CHANNELS = 3
 
 MOMENTUM = 0.9
-LEARNING_RATE = 1e-4
-DROPOUT_RATE = 0.4
-HID_SIZE = 256
+LEARNING_RATE = 1e-3
+DROPOUT_RATE = 0.5
+HID_SIZE = 512
 
-NUM_LAYERS = 5
+NUM_LAYERS = 3 # Number of hidden layers.
 
 MAX_COLOR = 255
 

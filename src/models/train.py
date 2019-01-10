@@ -217,24 +217,24 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=NUM_EPOCHS):
                 channel3 = sess.run(embedded3, feed_dict={emb_input:x_sam[2]})
 
                 # Linearly scale the data
-                scaler.fit(channel1)
-                channel1 = scaler.transform(channel1)
-
-                scaler.fit(channel2)
-                channel2 = scaler.transform(channel2)
-
-                scaler.fit(channel3)
-                channel3 = scaler.transform(channel3)
+#                scaler.fit(channel1)
+#                channel1 = scaler.transform(channel1)
+#
+#                scaler.fit(channel2)
+#                channel2 = scaler.transform(channel2)
+#
+#                scaler.fit(channel3)
+#                channel3 = scaler.transform(channel3)
 
 #                channel1 = preprocessing.normalize(channel1, axis=0, norm="l1")
 #                channel2 = preprocessing.normalize(channel2, axis=0, norm="l1")
 #                channel3 = preprocessing.normalize(channel3, axis=0, norm="l1")
 
-                # Round to whole decimal
-                channel1 = np.around(channel1 * MAX_COLOR)
-                channel2 = np.around(channel2 * MAX_COLOR)
-                channel3 = np.around(channel3 * MAX_COLOR)
-
+#                # Round to whole decimal
+#                channel1 = np.around(channel1 * MAX_COLOR)
+#                channel2 = np.around(channel2 * MAX_COLOR)
+#                channel3 = np.around(channel3 * MAX_COLOR)
+#
 
 # FIXME: attempt to scale the image.
 #                channel1 = MAX_COLOR * channel1 / tf.norm(channel1)
@@ -268,18 +268,18 @@ def train(model_init_fn, optimizer_init_fn, num_epochs=NUM_EPOCHS):
                         channel2 = sess.run(embedded2, feed_dict={emb_input:xx[1]})
                         channel3 = sess.run(embedded3, feed_dict={emb_input:xx[2]})
 
-                        scaler.fit(channel1)
-                        channel1 = scaler.transform(channel1)
-
-                        scaler.fit(channel2)
-                        channel2 = scaler.transform(channel2)
-
-                        scaler.fit(channel3)
-                        channel3 = scaler.transform(channel3)
-
-                        channel1 = np.around(channel1 * MAX_COLOR)
-                        channel2 = np.around(channel2 * MAX_COLOR)
-                        channel3 = np.around(channel3 * MAX_COLOR)
+#                        scaler.fit(channel1)
+#                        channel1 = scaler.transform(channel1)
+#
+#                        scaler.fit(channel2)
+#                        channel2 = scaler.transform(channel2)
+#
+#                        scaler.fit(channel3)
+#                        channel3 = scaler.transform(channel3)
+#
+#                        channel1 = np.around(channel1 * MAX_COLOR)
+#                        channel2 = np.around(channel2 * MAX_COLOR)
+#                        channel3 = np.around(channel3 * MAX_COLOR)
 
 #                        channel1 = preprocessing.normalize(channel1, axis=0, norm="l1")
 #                        channel2 = preprocessing.normalize(channel2, axis=0, norm="l1")
