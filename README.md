@@ -1,4 +1,4 @@
-# LIGN167Project
+# Transerfer Learning with Image Recognition CNNs for Sentiment Analysis
 Developers: Nathaniel Nguyen, Chih Chen
 
 ## Proposal notes
