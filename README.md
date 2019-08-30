@@ -68,10 +68,7 @@ terminal. If you would like, you can adjust the model by editing the
 All logs from training will be outputed to ```LIGN167Project/src/data/logs```
 
 ## Description
-## Experiment
-## Result
-## Conclusion
-## Technologies used
-## Extras
-## References
+For a detaileded post analysis, please refer to the accompaniment [paper](https://github.com/c-h-b-chen/Text_to_Image_Sentiment_Analysis/blob/master/Transfer%20Learning%20NLP.pdf)
 
+## Acknowledgements
+This project was conducted for the Deep Learning & Natural Language Processing course at the University of California, San Diego, in the fall of 2018 with Leon Bergen.
